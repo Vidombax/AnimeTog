@@ -2,14 +2,24 @@
   "name": "animetog",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.5.13"
+    "axios": "^1.7.8",
+    "boxicons": "^2.1.4",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1",
+    "puppeteer": "^23.9.0",
+    "puppeteer-screen-recorder": "^3.0.6",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "vue-the-mask": "^0.11.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
