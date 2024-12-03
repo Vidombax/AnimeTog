@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 .env
+check-kodik-click.png
+check-load-page-anime.png
+correct-anime.png
 
 # Editor directories and files
 .vscode/*

@@ -1,8 +1,8 @@
 import Router from 'express';
-import { getAnime } from "../handlers/animejoy/handler";
+import AnimeHandler from '../handlers/animejoy/handler.js';
 
 const router = new Router();
 
-router.get('/anime', getAnime);
+router.get('/anime', AnimeHandler.getAnime);
 
 export default router;

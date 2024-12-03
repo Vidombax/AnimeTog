@@ -1,6 +1,5 @@
 import express from 'express';
-
-import animeJoyRoute from "./routes/animejoy.route";
+import animeJoyRoute from './routes/animejoy.route.js';
 
 const app = express();
 
@@ -11,4 +10,4 @@ app.use('/', animeJoyRoute);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-})
+});
