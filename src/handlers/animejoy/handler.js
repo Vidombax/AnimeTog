@@ -34,7 +34,7 @@ class AnimeHandler {
                 await page.keyboard.press('Enter');
                 await inputHandle.dispose();
                 console.log('Ждем загрузку...');
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, 10000));
             } else {
                 console.error('Не нашел поиск');
             }
@@ -55,7 +55,7 @@ class AnimeHandler {
                 }
 
                 console.log('Переходим на страницу с аниме...');
-                await page.goto(firstAnimeLink, {timeout: 3000, waitUntil: 'domcontentloaded'});
+                await page.goto(firstAnimeLink, {timeout: 5000, waitUntil: 'domcontentloaded'});
 
                 await page.waitForSelector('.playlists-items');
 
