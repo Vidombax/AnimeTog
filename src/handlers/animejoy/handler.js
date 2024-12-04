@@ -14,6 +14,7 @@ class AnimeHandler {
 
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
 
+            console.log('Получили ссылку на сайт: ', process.env.ANIME_PARSE_SITE);
             await page.goto(`${process.env.ANIME_PARSE_SITE}`);
 
             const inputHandle = await page.evaluateHandle(() => {
@@ -51,7 +52,7 @@ class AnimeHandler {
             if (firstAnimeLink) {
                 if (process.env.IS_TEST === 'true') {
                     //Проверяем нашел ли то аниме которое нужно
-                    await page.screenshot({ path: 'correct-anime.png' });
+                    await page.screenshot({ path: './public/screen_test/correct-anime.png' });
                 }
 
                 console.log('Переходим на страницу с аниме...');
@@ -61,39 +62,54 @@ class AnimeHandler {
 
                 if (process.env.IS_TEST === 'true') {
                     //проверяем загрузилась ли страница аниме
-                    await page.screenshot({ path: 'check-load-page-anime.png' });
+                    await page.screenshot({ path: './public/screen_test/check-load-page-anime.png' });
                 }
 
                 const carouselOfPlayers = await page.evaluate(() => {
-                    return Array.from(document.getElementsByClassName('playlists-items')[0].childNodes[0].childNodes).map(node => node.innerText);
+                    return Array.from(
+                        document.querySelectorAll('.playlists-items ul li') // Находим все <li> элементы
+                    ).filter(li => {
+                        const text = li.textContent.trim(); // Текст элемента
+                        return text.includes('Sibnet') || text.includes('Kodik'); // Фильтруем по тексту
+                    }).map(li => ({
+                        text: li.textContent.trim(), // Извлекаем текст
+                        index: Array.from(li.parentNode.children).indexOf(li) // Сохраняем индекс элемента
+                    }));
                 });
 
                 for (let i = 0; i < carouselOfPlayers.length; i++) {
-                    if (carouselOfPlayers[i].toUpperCase() === 'KODIK') {
-                        console.log('Нашли кодек...');
-                        const target = await page.evaluateHandle(() => {
-                            try {
-                                return document.getElementsByClassName('playlists-items')[0].childNodes[0].childNodes[i];
-                            }
-                            catch (e) {
-                                console.error(e);
-                            }
-                        });
+                    console.log('Найденные плееры: ', carouselOfPlayers);
+                    if (carouselOfPlayers[i].text.toUpperCase() === 'KODIK') {
+                        console.log('Нашли Kodik...');
+
+                        // Используем индекс для выбора элемента через Puppeteer
+                        const targetSelector = `.playlists-items ul li:nth-child(${carouselOfPlayers[i].index})`;
+
+                        // Кликаем по элементу
+                        const target = await page.$(targetSelector); // Находим элемент
                         if (target) {
                             await target.click();
 
                             if (process.env.IS_TEST === 'true') {
-                                //Проверяем нажат ли плеер Kodik
-                                await page.screenshot({ path: 'check-kodik-click.png' });
+                                // Проверяем, нажат ли плеер Kodik
+                                await page.screenshot({ path: './public/screen_test/check-kodik-click.png' });
                             }
 
+                            // Ждем 10 секунд
                             await new Promise(resolve => setTimeout(resolve, 10000));
 
+                            // Получаем iframe
                             const getFrame = await page.evaluate(() => {
                                 return document.getElementsByClassName('playlists-ajax')[0].childNodes[0].childNodes[3].childNodes[0].outerHTML;
                             });
-                            console.log('Получили iframe: ', getFrame);
-                            res.json(getFrame);
+                            if (getFrame.includes('aniqit.com')) {
+                                console.log('Получили iframe: ', getFrame);
+                                res.json(getFrame);
+                            } else {
+                                console.log('Не удалось найти iframe с aniqit.com.', getFrame);
+                            }
+                        } else {
+                            console.log('Не удалось найти целевой элемент Kodik.');
                         }
                         break;
                     }
