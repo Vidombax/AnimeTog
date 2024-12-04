@@ -10,7 +10,7 @@ class AnimeHandler {
             const browser = await puppeteer.launch();
             const page = await browser.newPage();
 
-            await page.setViewport({ width: 1920, height: 2080 });
+            await page.setViewport({width: 1920, height: 2080});
 
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
 
@@ -22,8 +22,7 @@ class AnimeHandler {
                     const form = document.getElementById('m_search');
 
                     return form.querySelector('#story');
-                }
-                catch (e) {
+                } catch (e) {
                     console.error(e);
                 }
             });
@@ -35,7 +34,7 @@ class AnimeHandler {
                 await page.keyboard.press('Enter');
                 await inputHandle.dispose();
                 console.log('Ждем загрузку...');
-                await new Promise(resolve => setTimeout(resolve, 10000));
+                await new Promise(resolve => setTimeout(resolve, 5000));
             } else {
                 console.error('Не нашел поиск');
             }
@@ -52,78 +51,66 @@ class AnimeHandler {
             if (firstAnimeLink) {
                 if (process.env.IS_TEST === 'true') {
                     //Проверяем нашел ли то аниме которое нужно
-                    await page.screenshot({ path: './public/screen_test/correct-anime.png' });
+                    await page.screenshot({path: './public/screen_test/correct-anime.png'});
                 }
 
                 console.log('Переходим на страницу с аниме...');
-                await page.goto(firstAnimeLink, { timeout: 10000, waitUntil: 'domcontentloaded' });
+                await page.goto(firstAnimeLink, {timeout: 3000, waitUntil: 'domcontentloaded'});
 
                 await page.waitForSelector('.playlists-items');
 
                 if (process.env.IS_TEST === 'true') {
                     //проверяем загрузилась ли страница аниме
-                    await page.screenshot({ path: './public/screen_test/check-load-page-anime.png' });
+                    await page.screenshot({path: './public/screen_test/check-load-page-anime.png'});
                 }
 
                 const carouselOfPlayers = await page.evaluate(() => {
-                    return Array.from(
-                        document.querySelectorAll('.playlists-items ul li') // Находим все <li> элементы
-                    ).filter(li => {
-                        const text = li.textContent.trim(); // Текст элемента
-                        return text.includes('Sibnet') || text.includes('Kodik'); // Фильтруем по тексту
-                    }).map(li => ({
-                        text: li.textContent.trim(), // Извлекаем текст
-                        index: Array.from(li.parentNode.children).indexOf(li) // Сохраняем индекс элемента
-                    }));
+                    const players = Array.from(document.querySelectorAll('.playlists-items ul li'));
+                    return players.map(player => player.innerText.trim().toUpperCase());
                 });
 
-                for (let i = 0; i < carouselOfPlayers.length; i++) {
-                    console.log('Найденные плееры: ', carouselOfPlayers);
-                    if (carouselOfPlayers[i].text.toUpperCase() === 'KODIK') {
-                        console.log('Нашли Kodik...');
+                console.log('Найденные плееры:', carouselOfPlayers);
 
-                        // Используем индекс для выбора элемента через Puppeteer
-                        const targetSelector = `.playlists-items ul li:nth-child(${carouselOfPlayers[i].index})`;
 
-                        // Кликаем по элементу
-                        const target = await page.$(targetSelector); // Находим элемент
-                        if (target) {
-                            await target.click();
+                const kodikIndex = carouselOfPlayers.indexOf('KODIK');
+                if (kodikIndex !== -1) {
+                    console.log('Нашли Kodik...');
 
-                            if (process.env.IS_TEST === 'true') {
-                                // Проверяем, нажат ли плеер Kodik
-                                await page.screenshot({ path: './public/screen_test/check-kodik-click.png' });
-                            }
+                    // Нажимаем на элемент с нужным индексом
+                    const targetClicked = await page.evaluateHandle((index) => {
+                        const players = document.querySelectorAll('.playlists-items ul li');
+                        players[index].click();
+                        return players[index];
+                    }, kodikIndex);
 
-                            // Ждем 10 секунд
-                            await new Promise(resolve => setTimeout(resolve, 10000));
-
-                            // Получаем iframe
-                            const getFrame = await page.evaluate(() => {
-                                return document.getElementsByClassName('playlists-ajax')[0].childNodes[0].childNodes[3].childNodes[0].outerHTML;
-                            });
-                            if (getFrame.includes('aniqit.com')) {
-                                console.log('Получили iframe: ', getFrame);
-                                res.json(getFrame);
-                            } else {
-                                console.log('Не удалось найти iframe с aniqit.com.', getFrame);
-                            }
-                        } else {
-                            console.log('Не удалось найти целевой элемент Kodik.');
-                        }
-                        break;
+                    if (process.env.IS_TEST === 'true') {
+                        // Проверяем, нажат ли плеер Kodik
+                        await page.screenshot({path: './public/screen_test/check-kodik-click.png'});
                     }
+
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+
+                    const getFrame = await page.evaluate(() => {
+                        const iframe = document.querySelector('.playlists-ajax iframe');
+                        return iframe ? iframe.outerHTML : null;
+                    });
+
+                    if (getFrame && getFrame.includes('aniqit.com')) {
+                        console.log('Получили iframe:', getFrame);
+                        res.json(getFrame);
+                    } else {
+                        console.log('Не удалось найти iframe с aniqit.com.');
+                    }
+                } else {
+                    console.log('Плеер Kodik не найден в списке.');
                 }
-            } else {
-                console.error('Ссылка не найдена.');
+
+                await browser.close();
+
+                console.log('Закончили поиск аниме...');
             }
-
-            await browser.close();
-
-            console.log('Закончили поиск аниме...');
-        }
-        catch (e) {
-            throw e;
+        } catch (e) {
+            console.log(e);
         }
     }
 }
