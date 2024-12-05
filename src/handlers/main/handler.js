@@ -37,6 +37,33 @@ class MainHandler {
             res.status(500).json({error: 'Внутренняя ошибка'});
         }
     }
+    async createUser(req, res) {
+        try {
+            const login = req.body.login;
+            const email = req.body.email;
+            const password = req.body.password;
+
+            const searchExistUser = await db.query(
+                'SELECT * FROM users WHERE email_user = $1',
+                [email]
+            );
+            if (searchExistUser.rows.length === 0) {
+                const user = await db.query(
+                    'INSERT INTO users (name_user, email_user, password_user) VALUES ($1, $2, $3) RETURNING *',
+                    [login, email, password]
+                );
+                if (user.rows.length > 0) {
+                    res.json(user.rows[0]);
+                }
+            }
+            else {
+                res.status(401).json({ error: 'Пользователь с такой почтой уже существует!' });
+            }
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({error: 'Внутрення ошибка сервера'});
+        }
+    }
 }
 
 export default new MainHandler();

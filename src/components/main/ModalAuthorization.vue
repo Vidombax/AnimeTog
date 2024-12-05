@@ -33,7 +33,18 @@ const loginClick = async () => {
 
 const registrationClick = async () => {
   try {
-
+    const decodePassword = cryptoJs.enc.Base64.stringify(cryptoJs.enc.Utf8.parse(password.value));
+    const userId = await MainStore.createUser(login.value, email.value, decodePassword);
+    if (userId !== undefined) {
+      localStorage.setItem('id', userId);
+      location.reload();
+    }
+    else {
+      await Toast.fire({
+        icon: "error",
+        title: "На эту почту уже зарегистрирован аккаунт!"
+      });
+    }
   }
   catch (e) {
     if (e.response && e.response.status === 401) {

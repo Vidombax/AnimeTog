@@ -5,5 +5,6 @@ const router = new Router();
 
 router.get('/account/:email/:password', MainHandler.Authorization);
 router.get('/account/:id', MainHandler.getUser);
+router.post('/account', MainHandler.createUser);
 
 export default router;
