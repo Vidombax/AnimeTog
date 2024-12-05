@@ -15,10 +15,22 @@ let isSearchBlocked = ref(false);
 const searchClick = async () => {
   isSearchBlocked.value = true;
   await RoomStore.getAnime(animeName, htmlFrame, isSearchBlocked);
+  if (htmlFrame.value !== '') {
+    await RoomStore.addIFrameToRoom(id.value, htmlFrame.value);
+  }
+}
+
+const isPrivate = ref(false);
+const setPrivateClick = async () => {
+  isPrivate.value = await RoomStore.setPrivate(id.value);
 }
 
 onMounted(async () => {
   isRoomExist.value = await RoomStore.getRoom(id.value);
+  htmlFrame.value = await RoomStore.getIFrame(id.value);
+  if (htmlFrame !== '') {
+    document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
+  }
 });
 </script>
 

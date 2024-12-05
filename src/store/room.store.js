@@ -3,7 +3,7 @@ import axios from "axios";
 class RoomStore {
     async getAnime(animeName, htmlFrame, isSearchBlocked)  {
         try {
-            const parentVideo = document.getElementsByClassName('video')[0]; // Инициализация внутри метода
+            const parentVideo = document.getElementsByClassName('video')[0];
             const response = await axios.get(`/api/anime`, {
                 params: { animeName: animeName.value.toString().split(' ').join("-") },
             });
@@ -35,7 +35,38 @@ class RoomStore {
             return 'Такой комнаты не существует';
         }
     }
-
+    async addIFrameToRoom(uuid, iframe) {
+        try {
+            const response = await axios.put('/api/room', {
+                uuid: uuid,
+                iframe: iframe
+            });
+            return response.data;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async getIFrame(uuid) {
+        try {
+            const response = await axios.get(`/api/iframe/${uuid}`);
+            return response.data.iframe;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async setPrivate(uuid) {
+        try {
+            const response = await axios.put(`/api/room-visible`, {
+                uuid: uuid
+            });
+            return response.data;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 export default new RoomStore()
