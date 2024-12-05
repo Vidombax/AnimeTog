@@ -7,5 +7,6 @@ const db = new pg.Pool({
     password: `${process.env.POSTGRES_PASSWORD}`,
     host: `${process.env.POSTGRES_HOST}`,
     database: `${process.env.POSTGRES_DATABASE}`,
+    port: `${process.env.POSTGRES_PORT}`,
 })
 export default db;

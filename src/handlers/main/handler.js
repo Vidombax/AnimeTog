@@ -19,7 +19,24 @@ class MainHandler {
             res.status(500).json({ error: 'Внутренняя ошибка сервера' });
         }
     }
-
+    async getUser(req, res) {
+        try {
+            const id = req.params.id;
+            const user = await db.query(
+              'SELECT * FROM users WHERE id_user = $1',
+                [id]
+            );
+            if (user.rows.length > 0) {
+                res.json(user.rows[0]);
+            }
+            else {
+                res.status(401).json({ error: 'У вас нет прав доступа' });
+            }
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({error: 'Внутренняя ошибка'});
+        }
+    }
 }
 
 export default new MainHandler();

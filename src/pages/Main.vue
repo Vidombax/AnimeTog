@@ -1,35 +1,21 @@
 <script setup>
-import {ref, inject} from "vue";
-import MainStore from "@/store/main.store.js";
+import {ref, inject, provide} from "vue";
 import RoomStore from "@/store/room.store.js";
+import ModalAuthorization from "../components/main/ModalAuthorization.vue";
 
 const {Toast} = inject('app')
 
 const id = ref(Number(localStorage.getItem('id')) || 0);
 
-const email = 'kirilka360@gmail.com';
-const password = '1234';
+const isModalOpen = ref(false);
 
-const loginClick = async () => {
-  try {
-    const userId = await MainStore.GetUser(email, password);
-    localStorage.setItem('id', userId);
-    location.reload();
-  } catch (e) {
-    if (e.response && e.response.status === 401) {
-      await Toast.fire({
-        icon: "error",
-        title: "Неверный email или пароль. Попробуйте ещё раз."
-      });
-    } else {
-      await Toast.fire({
-        icon: "error",
-        title: "Произошла ошибка. Обратитесь к администратору"
-      });
-    }
-  }
-};
+const modalActiveClick = () => {
+  isModalOpen.value = isModalOpen.value === false;
+}
 
+provide('main', {
+  modalActiveClick
+});
 
 const createRoomClick = async () => {
   try {
@@ -52,7 +38,8 @@ const createRoomClick = async () => {
 </script>
 
 <template>
-  <button @click="loginClick" v-if="id === 0">Авторизоваться</button>
+  <ModalAuthorization v-show="isModalOpen"/>
+  <button @click="modalActiveClick" v-if="id === 0">Авторизоваться</button>
   <button v-else @click="createRoomClick">Создать комнату</button>
 </template>
 
