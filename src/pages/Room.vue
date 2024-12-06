@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import Swal from "sweetalert2";
 
 import RoomStore from "@/store/room.store.js";
+import Message from "../components/room/Message.vue";
 const {Toast} = inject('app');
 
 const route = useRoute();
@@ -104,7 +105,13 @@ onMounted(async () => {
         </div>
       </div>
       <div class="chat">
-
+        <div class="messages">
+          <Message />
+        </div>
+        <div class="chat-inputs">
+          <input type="text" placeholder="Введите текст">
+          <button>Отправить</button>
+        </div>
       </div>
     </div>
   </div>
@@ -144,16 +151,71 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
 }
+.chat {
+  background-color: #101010;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 500px;
+  height: 560.5px;
+}
+.messages {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  overflow-y: scroll;
+  background-color: #242424;
+  height: 450px;
+  width: 455px;
+  border-radius: 6px;
+  margin-bottom: 15%;
+}
+.messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: rgba(241, 241, 241, 0.0);
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+.chat-inputs {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.chat-inputs input {
+  width: 300px;
+  height: 30px;
+  font-size: large;
+}
 .search {
   display: flex;
   flex-direction: row;
   gap: 24px;
+  background-color: #242424;
 }
 .search input {
   font-size: large;
 }
 .video {
-  width: 607px;
-  height: 360px;
+  width: 900px;
+  height: 560px;
 }
 </style>
