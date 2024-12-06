@@ -13,7 +13,7 @@ const menuVisibleClick = () => {
 
 const exitFromAccount = () => {
   localStorage.removeItem('id');
-  location.reload();
+  location.replace('http://localhost:5173/');
 }
 
 onMounted(async () => {

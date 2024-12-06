@@ -49,7 +49,7 @@ class RoomStore {
     }
     async getIFrame(uuid) {
         try {
-            const response = await axios.get(`/api/iframe/${uuid}`);
+            const response = await axios.get(`/api/info-room/${uuid}`);
             return response.data.iframe;
         }
         catch (e) {
@@ -62,6 +62,38 @@ class RoomStore {
                 uuid: uuid
             });
             return response.data;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async getPrivate(uuid) {
+        try {
+            const response = await axios.get(`/api/info-room/${uuid}`);
+            return response.data.is_opened;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async checkAccessToRoom(id, uuid) {
+        try {
+            const response = await axios.get(`/api/access-to-room/${id}/${uuid}`);
+            return response.data.answer;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async checkIsUserAuthor(uuid, id) {
+        try {
+            const response = await axios.get(`/api/info-room/${uuid}`);
+            if (response.data.id_user === id) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
         catch (e) {
             console.log(e);
