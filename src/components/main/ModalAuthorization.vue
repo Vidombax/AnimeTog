@@ -15,7 +15,13 @@ const loginClick = async () => {
     const encodePassword = cryptoJs.enc.Base64.stringify(cryptoJs.enc.Utf8.parse(`${password.value}`));
     const userId = await MainStore.GetUser(email.value, encodePassword);
     localStorage.setItem('id', userId);
-    location.reload();
+    if (localStorage.getItem('redirectUrl')) {
+      location.replace(localStorage.getItem('redirectUrl'));
+      localStorage.removeItem('redirectUrl');
+    }
+    else {
+      location.reload();
+    }
   } catch (e) {
     if (e.response && e.response.status === 401) {
       await Toast.fire({
@@ -37,7 +43,13 @@ const registrationClick = async () => {
     const userId = await MainStore.createUser(login.value, email.value, decodePassword);
     if (userId !== undefined) {
       localStorage.setItem('id', userId);
-      location.reload();
+      if (localStorage.getItem('redirectUrl')) {
+        location.replace(localStorage.getItem('redirectUrl'));
+        localStorage.removeItem('redirectUrl');
+      }
+      else {
+        location.reload();
+      }
     }
     else {
       await Toast.fire({

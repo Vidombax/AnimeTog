@@ -1,15 +1,19 @@
 <script setup>
-
+defineProps({
+  name: String,
+  message: String,
+  time: String
+});
 </script>
 
 <template>
   <div class="message">
     <div class="message-info">
-      <span>Имя</span>
-      <span>Сообщение</span>
+      <span>{{ name }}</span>
+      <span>{{ message }}</span>
     </div>
     <div class="message-time">
-      <span>00:00</span>
+      <span>{{ time.replace(/\.\d+$/, '') }}</span>
     </div>
   </div>
 </template>
@@ -17,7 +21,7 @@
 <style scoped>
 .message {
   display: flex;
-  position: absolute;
+  position: relative;
   left: 0;
   margin-left: 12px;
   gap: 4px;

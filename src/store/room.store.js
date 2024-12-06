@@ -103,7 +103,6 @@ class RoomStore {
         try {
             const url = new URL(window.location.href);
             const hasShareParam = url.searchParams.has('share');
-            console.log(hasShareParam)
 
             if (hasShareParam) {
                 const response = await axios.post(`/api/give-access`, {
@@ -114,9 +113,18 @@ class RoomStore {
                 url.searchParams.delete('share');
                 window.history.replaceState({}, '', url.toString());
             }
-            else {
-                console.log('Доступа к этой комнате нету');
-            }
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async createMessage(id, uuid, message) {
+        try {
+            const response = await axios.post(`/api/message`, {
+               id: id,
+               uuid: uuid,
+               message: message
+            });
         }
         catch (e) {
             console.log(e);

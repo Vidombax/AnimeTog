@@ -10,5 +10,7 @@ router.put('/room-visible', RoomHandler.setVisibleRoom);
 router.get('/info-room/:uuid', RoomHandler.getAllInfoRoom);
 router.get('/access-to-room/:id/:uuid', RoomHandler.checkAccessToRoom);
 router.post('/give-access', RoomHandler.giveAccessToUser);
+router.post('/message', RoomHandler.createMessage);
+router.get('/message/:uuid', RoomHandler.getMessages);
 
 export default router;

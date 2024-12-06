@@ -12,10 +12,12 @@ class AnimeHandler {
 
             await page.setViewport({width: 1920, height: 2080});
 
+
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
 
             console.log('Получили ссылку на сайт: ', process.env.ANIME_PARSE_SITE);
-            await page.goto(`${process.env.ANIME_PARSE_SITE}`);
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            await page.goto(`${process.env.ANIME_PARSE_SITE}`, { waitUntil: 'domcontentloaded' });
 
             const inputHandle = await page.evaluateHandle(() => {
                 try {
@@ -55,7 +57,7 @@ class AnimeHandler {
                 }
 
                 console.log('Переходим на страницу с аниме...');
-                await page.goto(firstAnimeLink, {timeout: 5000, waitUntil: 'domcontentloaded'});
+                await page.goto(firstAnimeLink, {timeout: 10000, waitUntil: 'domcontentloaded'});
 
                 await page.waitForSelector('.playlists-items');
 

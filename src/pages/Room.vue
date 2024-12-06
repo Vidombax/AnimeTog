@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 
 import RoomStore from "@/store/room.store.js";
 import Message from "../components/room/Message.vue";
+import axios from "axios";
 const {Toast} = inject('app');
 
 const route = useRoute();
@@ -43,6 +44,27 @@ const shareLinkClick = () => {
       });
 }
 
+const comment = ref('');
+const createCommentClick = async () => {
+  if (comment.value === ' ' || comment.value === '') {
+    await Toast.fire({
+      icon: "error",
+      title: "Введите сообщение!"
+    });
+  }
+  else {
+    await RoomStore.createMessage(idUser.value, id.value, comment.value);
+    await loadComment();
+    comment.value = '';
+  }
+}
+
+const chat = ref([]);
+const loadComment = async () => {
+  const response = await axios.get(`/api/message/${id.value}`);
+  chat.value = response.data;
+}
+
 onMounted(async () => {
   if (idUser.value !== 0) {
     isOpened.value = await RoomStore.getPrivate(id.value);
@@ -64,6 +86,16 @@ onMounted(async () => {
     if (htmlFrame !== '') {
       document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
     }
+    await loadComment();
+    const inputMessages = document.getElementsByClassName('input-text')[0];
+    if (inputMessages) {
+      inputMessages.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          createCommentClick();
+        }
+      });
+    }
   }
   else {
     Swal.fire({
@@ -75,6 +107,7 @@ onMounted(async () => {
       confirmButtonText: "Авторизоваться"
     }).then((result) => {
       if (result.isConfirmed) {
+        localStorage.setItem('redirectUrl', location.href);
         location.replace(`http://localhost:5173`);
       }
     });
@@ -85,7 +118,7 @@ onMounted(async () => {
 <template>
   <div class="container" v-if="isRoomExist === 'true'">
     <div class="player">
-      <div class="search">
+      <div class="search" v-show="isUserAuthor">
         <input type="text" v-model="animeName" placeholder="Введите название аниме">
         <button @click="searchClick" v-if="isSearchBlocked === false">Найти</button>
         <button v-else disabled style="cursor: wait;">Загрузка...</button>
@@ -106,11 +139,16 @@ onMounted(async () => {
       </div>
       <div class="chat">
         <div class="messages">
-          <Message />
+          <Message v-for="item in chat"
+                   :key="item.id"
+                   :message="item.comment"
+                   :name="item.name_user"
+                   :time="item.date_message"
+          />
         </div>
         <div class="chat-inputs">
-          <input type="text" placeholder="Введите текст">
-          <button>Отправить</button>
+          <input type="text" placeholder="Введите текст" class="input-text" v-model="comment" maxlength="150">
+          <box-icon name='send' type='solid' color='#ffffff' style="cursor: pointer;" @click="createCommentClick"></box-icon>
         </div>
       </div>
     </div>
@@ -167,7 +205,6 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
   overflow-y: scroll;
   background-color: #242424;
   height: 450px;

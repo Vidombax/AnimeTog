@@ -141,6 +141,34 @@ class RoomHandler {
             console.log(e);
         }
     }
+    async createMessage(req, res) {
+        try {
+            const uuid = req.body.uuid;
+            const id = req.body.id;
+            const message = req.body.message.substring(0, 150);
+            const comment = await db.query(
+                'INSERT INTO chat (id_room, id_user, comment, date_message) VALUES ($1, $2, $3, CURRENT_TIME) RETURNING *',
+                [uuid, id, message]
+            );
+            res.send(comment.rows[0].comment);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    async getMessages(req, res) {
+        try {
+            const uuid = req.params.uuid;
+            const messages = await db.query(
+              'SELECT name_user, comment, date_message FROM chat INNER JOIN users u on u.id_user = chat.id_user WHERE id_room = $1 ORDER BY id_comment ASC',
+                [uuid]
+            );
+            res.json(messages.rows);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 export default new RoomHandler();
