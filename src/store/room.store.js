@@ -99,6 +99,29 @@ class RoomStore {
             console.log(e);
         }
     }
+    async giveAccessToUser(id, uuid) {
+        try {
+            const url = new URL(window.location.href);
+            const hasShareParam = url.searchParams.has('share');
+            console.log(hasShareParam)
+
+            if (hasShareParam) {
+                const response = await axios.post(`/api/give-access`, {
+                    uuid: uuid,
+                    id: id
+                });
+
+                url.searchParams.delete('share');
+                window.history.replaceState({}, '', url.toString());
+            }
+            else {
+                console.log('Доступа к этой комнате нету');
+            }
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 export default new RoomStore()

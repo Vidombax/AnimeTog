@@ -3,7 +3,7 @@ import {ref, inject, provide} from "vue";
 import RoomStore from "@/store/room.store.js";
 import ModalAuthorization from "../components/main/ModalAuthorization.vue";
 
-const {Toast} = inject('app')
+const {Toast} = inject('app');
 
 const id = ref(Number(localStorage.getItem('id')) || 0);
 

@@ -127,6 +127,20 @@ class RoomHandler {
             console.log(e);
         }
     }
+    async giveAccessToUser(req, res) {
+        try {
+            const id = req.body.id;
+            const uuid = req.body.uuid;
+            const access = await db.query(
+              'INSERT INTO accessroom (uuid_room, id_user) VALUES ($1, $2)',
+              [uuid, id]
+            );
+            res.json('');
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 export default new RoomHandler();

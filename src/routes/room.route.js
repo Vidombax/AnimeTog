@@ -9,5 +9,6 @@ router.put('/room', RoomHandler.addIFrameToDB);
 router.put('/room-visible', RoomHandler.setVisibleRoom);
 router.get('/info-room/:uuid', RoomHandler.getAllInfoRoom);
 router.get('/access-to-room/:id/:uuid', RoomHandler.checkAccessToRoom);
+router.post('/give-access', RoomHandler.giveAccessToUser);
 
 export default router;

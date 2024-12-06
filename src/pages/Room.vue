@@ -1,8 +1,10 @@
 <script setup>
-import {onMounted, ref} from "vue";
-import { useRoute } from 'vue-router'
+import {inject, onMounted, ref} from "vue";
+import { useRoute } from 'vue-router';
+import Swal from "sweetalert2";
 
 import RoomStore from "@/store/room.store.js";
+const {Toast} = inject('app');
 
 const route = useRoute();
 const id = ref(route.params.id);
@@ -22,27 +24,59 @@ const searchClick = async () => {
   }
 }
 
-const isClosed = ref(true);
+const isOpened = ref(true);
 const setPrivateClick = async () => {
-  isClosed.value = await RoomStore.setPrivate(id.value);
+  isOpened.value = await RoomStore.setPrivate(id.value);
+}
+
+const shareLinkClick = () => {
+  navigator.clipboard.writeText(`${location.href}?share=${idUser.value}`)
+      .then(() => {
+        Toast.fire({
+          icon: "success",
+          title: "Ссылка скопирована!"
+        });
+      })
+      .catch(err => {
+        console.log('Something went wrong', err);
+      });
 }
 
 onMounted(async () => {
-  isClosed.value = await RoomStore.getPrivate(id.value);
-  isRoomExist.value = await RoomStore.getRoom(id.value);
-  if (isClosed.value === true) {
-    console.log('Комната общедоступная');
-  }
-  else {
-    let getAccess = await RoomStore.checkAccessToRoom(idUser.value, id.value);
-    if (getAccess !== 'Доступ к этой комнате есть у пользователя') {
-      isRoomExist.value = 'Такой комнаты не существует!';
+  if (idUser.value !== 0) {
+    isOpened.value = await RoomStore.getPrivate(id.value);
+    if (isOpened.value === false) {
+      await RoomStore.giveAccessToUser(idUser.value, id.value);
+    }
+    isRoomExist.value = await RoomStore.getRoom(id.value);
+    if (isOpened.value === true) {
+      console.log('Комната общедоступная');
+    }
+    else {
+      let getAccess = await RoomStore.checkAccessToRoom(idUser.value, id.value);
+      if (getAccess !== 'Доступ к этой комнате есть у пользователя') {
+        isRoomExist.value = 'Такой комнаты не существует!';
+      }
+    }
+    htmlFrame.value = await RoomStore.getIFrame(id.value);
+    isUserAuthor.value = await RoomStore.checkIsUserAuthor(id.value, idUser.value);
+    if (htmlFrame !== '') {
+      document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
     }
   }
-  htmlFrame.value = await RoomStore.getIFrame(id.value);
-  isUserAuthor.value = await RoomStore.checkIsUserAuthor(id.value, idUser.value);
-  if (htmlFrame !== '') {
-    document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
+  else {
+    Swal.fire({
+      title: "Ошибка доступа",
+      text: "Пожалуйста авторизуйтесь",
+      icon: "error",
+      showCancelButton: false,
+      confirmButtonColor: "#1a1a1a",
+      confirmButtonText: "Авторизоваться"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        location.replace(`http://localhost:5173`);
+      }
+    });
   }
 });
 </script>
@@ -62,8 +96,11 @@ onMounted(async () => {
     <div class="tools">
       <div class="buttonsSettings">
         <div class="private-button-div" v-show="isUserAuthor">
-          <button v-if="isClosed" @click="setPrivateClick">Сделать комнату приватной</button>
+          <button v-if="isOpened" @click="setPrivateClick">Сделать комнату приватной</button>
           <button v-else @click="setPrivateClick">Сделать комнату открытой</button>
+        </div>
+        <div class="share-button-div">
+          <button @click="shareLinkClick">Поделиться ссылкой</button>
         </div>
       </div>
       <div class="chat">
@@ -99,6 +136,13 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   gap: 24px;
+}
+.buttonsSettings {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
 .search {
   display: flex;
