@@ -20,7 +20,7 @@ provide('main', {
 const createRoomClick = async () => {
   try {
     const uuid = await RoomStore.createRoom(id.value);
-    location.replace(`http://localhost:5173/room/${uuid}`);
+    location.replace(`${import.meta.env.VITE_HOST}/room/${uuid}`);
   } catch (e) {
     if (e.response && e.response.status === 400) {
       await Toast.fire({

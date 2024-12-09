@@ -2,6 +2,7 @@
 import {inject, onMounted, ref} from "vue";
 import { useRoute } from 'vue-router';
 import Swal from "sweetalert2";
+import mqtt from 'mqtt';
 
 import RoomStore from "@/store/room.store.js";
 import Message from "../components/room/Message.vue";
@@ -11,12 +12,16 @@ const {Toast} = inject('app');
 const route = useRoute();
 const id = ref(route.params.id);
 
+const client = mqtt.connect("ws://broker.hivemq.com:8000/mqtt");
+const topic = `chat/${id.value}`;
+
 const isRoomExist = ref('');
 let animeName = ref('');
 let htmlFrame = ref('');
 let isSearchBlocked = ref(false);
 const isUserAuthor = ref(false);
 const idUser = ref(Number(localStorage.getItem('id')));
+const chat = ref([]);
 
 const searchClick = async () => {
   isSearchBlocked.value = true;
@@ -45,21 +50,45 @@ const shareLinkClick = () => {
 }
 
 const comment = ref('');
+let date = new Date();
+const messageData = ref({});
 const createCommentClick = async () => {
-  if (comment.value === ' ' || comment.value === '') {
+  if (comment.value.trim() === "") {
     await Toast.fire({
       icon: "error",
-      title: "Введите сообщение!"
+      title: "Введите сообщение!",
     });
+  } else {
+    messageData.value = {
+      idUser: idUser.value,
+      idRoom: id.value,
+      comment: comment.value,
+      name_user: localStorage.getItem('name'),
+      date_message: `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+    };
+    client.publish(topic, JSON.stringify(messageData.value));
+    comment.value = "";
   }
-  else {
-    await RoomStore.createMessage(idUser.value, id.value, comment.value);
-    await loadComment();
-    comment.value = '';
-  }
-}
+};
 
-const chat = ref([]);
+client.on("message", async (receivedTopic, payload) => {
+  if (receivedTopic === topic) {
+    const newMessage = JSON.parse(payload.toString());
+    console.log(newMessage)
+    if (newMessage.idUser === idUser.value) {
+      await RoomStore.createMessage(newMessage.idUser, newMessage.idRoom, newMessage.comment);
+      chat.value.push(newMessage);
+    }
+    else {
+      chat.value.push(newMessage);
+    }
+  }
+});
+
+client.on("connect", () => {
+  console.log('MQTT connected:', client.connected);
+});
+
 const loadComment = async () => {
   const response = await axios.get(`/api/message/${id.value}`);
   chat.value = response.data;
@@ -96,6 +125,8 @@ onMounted(async () => {
         }
       });
     }
+
+    client.subscribe(topic);
   }
   else {
     Swal.fire({
@@ -108,7 +139,7 @@ onMounted(async () => {
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.setItem('redirectUrl', location.href);
-        location.replace(`http://localhost:5173`);
+        location.replace(`${import.meta.env.VITE_HOST}`);
       }
     });
   }
@@ -148,7 +179,13 @@ onMounted(async () => {
         </div>
         <div class="chat-inputs">
           <input type="text" placeholder="Введите текст" class="input-text" v-model="comment" maxlength="150">
-          <box-icon name='send' type='solid' color='#ffffff' style="cursor: pointer;" @click="createCommentClick"></box-icon>
+          <box-icon
+              name='send'
+              type='solid'
+              color='#ffffff'
+              style="cursor: pointer;"
+              @click="createCommentClick"
+          />
         </div>
       </div>
     </div>

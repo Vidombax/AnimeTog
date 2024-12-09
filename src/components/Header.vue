@@ -13,18 +13,19 @@ const menuVisibleClick = () => {
 
 const exitFromAccount = () => {
   localStorage.removeItem('id');
-  location.replace('http://localhost:5173/');
+  location.replace(`${import.meta.env.VITE_HOST}`);
 }
 
 onMounted(async () => {
   if (id.value !== 0) {
     userName.value = await MainStore.getUserByID(id.value);
+    localStorage.setItem('name', userName.value);
   }
 });
 </script>
 <template>
   <header class="site-header">
-    <h2 class="site-title"><a href="http://localhost:5173/">AnimeTogether</a></h2>
+    <h2 class="site-title"><a href="/">AnimeTogether</a></h2>
     <div class="account" v-if="id !== 0">
       <h4 @click="menuVisibleClick">{{ userName }}</h4>
     </div>

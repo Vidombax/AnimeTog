@@ -13,7 +13,7 @@ defineProps({
       <span>{{ message }}</span>
     </div>
     <div class="message-time">
-      <span>{{ time.replace(/\.\d+$/, '') }}</span>
+      <span>{{ time.includes('.') ? time.replace(/\.\d+$/, '') : time }}</span>
     </div>
   </div>
 </template>

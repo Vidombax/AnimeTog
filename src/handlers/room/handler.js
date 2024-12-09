@@ -143,12 +143,11 @@ class RoomHandler {
     }
     async createMessage(req, res) {
         try {
-            const uuid = req.body.uuid;
-            const id = req.body.id;
-            const message = req.body.message.substring(0, 150);
+            const { uuid, id, message } = req.body;
+            const sanitizedMessage = message.substring(0, 150);
             const comment = await db.query(
                 'INSERT INTO chat (id_room, id_user, comment, date_message) VALUES ($1, $2, $3, CURRENT_TIME) RETURNING *',
-                [uuid, id, message]
+                [uuid, id, sanitizedMessage]
             );
             res.send(comment.rows[0].comment);
         }
