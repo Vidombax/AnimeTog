@@ -30,6 +30,7 @@ const searchClick = async () => {
   if (htmlFrame.value !== '') {
     await RoomStore.addIFrameToRoom(id.value, htmlFrame.value);
     const iframeData = ref({
+      typeMQTT: 1,
       iframe: htmlFrame.value,
       uuidRoom: id.value
     });
@@ -42,17 +43,8 @@ const setPrivateClick = async () => {
   isOpened.value = await RoomStore.setPrivate(id.value);
 }
 
-const shareLinkClick = () => {
-  navigator.clipboard.writeText(`${location.href}?share=${idUser.value}`)
-      .then(() => {
-        Toast.fire({
-          icon: "success",
-          title: "Ссылка скопирована!"
-        });
-      })
-      .catch(err => {
-        console.log('Something went wrong', err);
-      });
+const shareLinkClick = async () => {
+  await RoomStore.shareLink(idUser, Toast);
 }
 
 const comment = ref('');
@@ -66,6 +58,7 @@ const createCommentClick = async () => {
   } else {
     let date = new Date();
     messageData.value = {
+      typeMQTT: 0,
       idUser: idUser.value,
       idRoom: id.value,
       comment: comment.value,
@@ -81,19 +74,31 @@ client.on("message", async (receivedTopic, payload) => {
   if (receivedTopic === topic) {
     const newMessage = JSON.parse(payload.toString());
     console.log(newMessage)
-    if (newMessage.hasOwnProperty('idUser')) {
-      if (newMessage.idUser === idUser.value) {
-        await RoomStore.createMessage(newMessage.idUser, newMessage.idRoom, newMessage.comment);
-        chat.value.push(newMessage);
-      }
-      else {
-        chat.value.push(newMessage);
-      }
-      await nextTick();
-      await RoomStore.scrollToBottom('messages');
-    }
-    else {
-      htmlFrame.value = newMessage.iframe;
+    switch (newMessage.typeMQTT) {
+      case 0:
+        //Добавление сообщение в чат
+        if (newMessage.idUser === idUser.value) {
+          await RoomStore.createMessage(newMessage.idUser, newMessage.idRoom, newMessage.comment);
+          chat.value.push(newMessage);
+        }
+        else {
+          chat.value.push(newMessage);
+        }
+        await nextTick();
+        await RoomStore.scrollToBottom('messages');
+        break;
+      case 1:
+        //Добавление iframe в комнату
+        htmlFrame.value = newMessage.iframe;
+        await nextTick();
+        iframe.value = document.querySelector('iframe');
+        break;
+      case 2:
+        //Запуск плеера
+        break;
+      case 3:
+        //Стоп плеера
+        break;
     }
   }
 });

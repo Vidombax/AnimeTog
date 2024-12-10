@@ -141,6 +141,18 @@ class RoomStore {
             console.error(`Не нашел div с чатом`);
         }
     }
+    async shareLink(idUser, Toast)  {
+        navigator.clipboard.writeText(`${location.href}?share=${idUser.value}`)
+            .then(() => {
+                Toast.fire({
+                    icon: "success",
+                    title: "Ссылка скопирована!"
+                });
+            })
+            .catch(err => {
+                console.log('Something went wrong', err);
+            });
+    }
 }
 
 export default new RoomStore()
