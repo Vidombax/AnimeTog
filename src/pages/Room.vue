@@ -1,5 +1,5 @@
 <script setup>
-import {inject, onMounted, ref} from "vue";
+import {inject, nextTick, onMounted, ref, watch} from "vue";
 import { useRoute } from 'vue-router';
 import Swal from "sweetalert2";
 import mqtt from 'mqtt';
@@ -7,6 +7,7 @@ import mqtt from 'mqtt';
 import RoomStore from "@/store/room.store.js";
 import Message from "../components/room/Message.vue";
 import axios from "axios";
+import Video from "../components/room/Video.vue";
 const {Toast} = inject('app');
 
 const route = useRoute();
@@ -28,6 +29,11 @@ const searchClick = async () => {
   await RoomStore.getAnime(animeName, htmlFrame, isSearchBlocked);
   if (htmlFrame.value !== '') {
     await RoomStore.addIFrameToRoom(id.value, htmlFrame.value);
+    const iframeData = ref({
+      iframe: htmlFrame.value,
+      uuidRoom: id.value
+    });
+    client.publish(topic, JSON.stringify(iframeData.value));
   }
 }
 
@@ -50,7 +56,6 @@ const shareLinkClick = () => {
 }
 
 const comment = ref('');
-let date = new Date();
 const messageData = ref({});
 const createCommentClick = async () => {
   if (comment.value.trim() === "") {
@@ -59,6 +64,7 @@ const createCommentClick = async () => {
       title: "Введите сообщение!",
     });
   } else {
+    let date = new Date();
     messageData.value = {
       idUser: idUser.value,
       idRoom: id.value,
@@ -75,18 +81,27 @@ client.on("message", async (receivedTopic, payload) => {
   if (receivedTopic === topic) {
     const newMessage = JSON.parse(payload.toString());
     console.log(newMessage)
-    if (newMessage.idUser === idUser.value) {
-      await RoomStore.createMessage(newMessage.idUser, newMessage.idRoom, newMessage.comment);
-      chat.value.push(newMessage);
+    if (newMessage.hasOwnProperty('idUser')) {
+      if (newMessage.idUser === idUser.value) {
+        await RoomStore.createMessage(newMessage.idUser, newMessage.idRoom, newMessage.comment);
+        chat.value.push(newMessage);
+      }
+      else {
+        chat.value.push(newMessage);
+      }
+      await nextTick();
+      await RoomStore.scrollToBottom('messages');
     }
     else {
-      chat.value.push(newMessage);
+      htmlFrame.value = newMessage.iframe;
     }
   }
 });
 
+const connection = ref(false);
 client.on("connect", () => {
   console.log('MQTT connected:', client.connected);
+  connection.value = true;
 });
 
 const loadComment = async () => {
@@ -94,28 +109,9 @@ const loadComment = async () => {
   chat.value = response.data;
 }
 
-onMounted(async () => {
-  if (idUser.value !== 0) {
-    isOpened.value = await RoomStore.getPrivate(id.value);
-    if (isOpened.value === false) {
-      await RoomStore.giveAccessToUser(idUser.value, id.value);
-    }
-    isRoomExist.value = await RoomStore.getRoom(id.value);
-    if (isOpened.value === true) {
-      console.log('Комната общедоступная');
-    }
-    else {
-      let getAccess = await RoomStore.checkAccessToRoom(idUser.value, id.value);
-      if (getAccess !== 'Доступ к этой комнате есть у пользователя') {
-        isRoomExist.value = 'Такой комнаты не существует!';
-      }
-    }
-    htmlFrame.value = await RoomStore.getIFrame(id.value);
-    isUserAuthor.value = await RoomStore.checkIsUserAuthor(id.value, idUser.value);
-    if (htmlFrame !== '') {
-      document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
-    }
-    await loadComment();
+watch(connection, async () => {
+  if (connection.value === true) {
+    await nextTick();
     const inputMessages = document.getElementsByClassName('input-text')[0];
     if (inputMessages) {
       inputMessages.addEventListener('keyup', (e) => {
@@ -125,6 +121,41 @@ onMounted(async () => {
         }
       });
     }
+  }
+});
+
+onMounted(async () => {
+  if (idUser.value !== 0) {
+    isOpened.value = await RoomStore.getPrivate(id.value);
+    if (isOpened.value === false) {
+      await RoomStore.giveAccessToUser(idUser.value, id.value);
+    }
+
+    isRoomExist.value = await RoomStore.getRoom(id.value);
+
+    if (isOpened.value === true) {
+      console.log('Комната общедоступная');
+    }
+    else {
+      let getAccess = await RoomStore.checkAccessToRoom(idUser.value, id.value);
+      if (getAccess !== 'Доступ к этой комнате есть у пользователя') {
+        isRoomExist.value = 'Такой комнаты не существует!';
+      }
+    }
+
+    htmlFrame.value = await RoomStore.getIFrame(id.value);
+
+    isUserAuthor.value = await RoomStore.checkIsUserAuthor(id.value, idUser.value);
+
+    if (htmlFrame !== '') {
+      document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
+    }
+
+    await loadComment();
+
+    document.getElementsByClassName('messages')[0].scrollTo({
+      top: document.getElementsByClassName('messages')[0].scrollHeight,
+    });
 
     client.subscribe(topic);
   }
@@ -154,9 +185,9 @@ onMounted(async () => {
         <button @click="searchClick" v-if="isSearchBlocked === false">Найти</button>
         <button v-else disabled style="cursor: wait;">Загрузка...</button>
       </div>
-      <div class="video">
-
-      </div>
+      <Video
+          :inner-html="htmlFrame"
+      />
     </div>
     <div class="tools">
       <div class="buttonsSettings">
@@ -169,7 +200,7 @@ onMounted(async () => {
         </div>
       </div>
       <div class="chat">
-        <div class="messages">
+        <div class="messages" id="messages">
           <Message v-for="item in chat"
                    :key="item.id"
                    :message="item.comment"
@@ -178,13 +209,37 @@ onMounted(async () => {
           />
         </div>
         <div class="chat-inputs">
-          <input type="text" placeholder="Введите текст" class="input-text" v-model="comment" maxlength="150">
+          <input
+              type="text"
+              placeholder="Введите текст"
+              class="input-text"
+              v-model="comment"
+              maxlength="150"
+              v-if="connection"
+          >
+          <input
+              type="text"
+              placeholder="Загрузка..."
+              class="input-text"
+              v-model="comment"
+              v-else
+              disabled
+              style="cursor: progress"
+          >
           <box-icon
               name='send'
               type='solid'
               color='#ffffff'
               style="cursor: pointer;"
               @click="createCommentClick"
+              v-if="connection"
+          />
+          <box-icon
+              name='send'
+              type='solid'
+              color='#DCDCDC'
+              style="cursor: progress"
+              v-else
           />
         </div>
       </div>
@@ -242,7 +297,7 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  overflow-y: scroll;
+  overflow-y: auto;
   background-color: #242424;
   height: 450px;
   width: 455px;
@@ -287,9 +342,5 @@ onMounted(async () => {
 }
 .search input {
   font-size: large;
-}
-.video {
-  width: 900px;
-  height: 560px;
 }
 </style>

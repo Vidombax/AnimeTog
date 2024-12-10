@@ -1,4 +1,5 @@
 import axios from "axios";
+import { nextTick } from "vue";
 
 class RoomStore {
     async getAnime(animeName, htmlFrame, isSearchBlocked)  {
@@ -128,6 +129,16 @@ class RoomStore {
         }
         catch (e) {
             console.log(e);
+        }
+    }
+    async scrollToBottom(element) {
+        let div = document.getElementById(element);
+        if (div) {
+            await nextTick();
+            div.scrollTop = div.scrollHeight;
+        }
+        else {
+            console.error(`Не нашел div с чатом`);
         }
     }
 }
