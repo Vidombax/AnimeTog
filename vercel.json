@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://audiosphere.onrender.com/:path*"
+      "destination": "https://animetog.onrender.com/:path*"
     }
   ]
 }
