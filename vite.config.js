@@ -18,6 +18,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
   },
+  devServer: {
+    historyApiFallback: true,
+  },
   plugins: [vue({
     template: {
       compilerOptions: {

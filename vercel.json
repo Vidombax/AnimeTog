@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://animetog.onrender.com/:path*"
+    },
+    {
+      "source": "/room/:path*",
+      "destination": "/"
     }
   ]
 }
