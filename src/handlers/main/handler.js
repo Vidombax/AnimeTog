@@ -64,6 +64,9 @@ class MainHandler {
             res.status(500).json({error: 'Внутрення ошибка сервера'});
         }
     }
+    async ping(req, res) {
+        res.send('ping');
+    }
 }
 
 export default new MainHandler();
