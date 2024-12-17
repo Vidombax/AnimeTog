@@ -3,14 +3,13 @@ import vue from '@vitejs/plugin-vue'
 
 import dotenv from 'dotenv';
 import {fileURLToPath, URL} from "node:url";
-dotenv.config();
 
 // https://vite.dev/config/
 export default defineConfig({
   server: {
     proxy: {
       '/api/': {
-        target: `http://localhost:3000`,
+        target: `${import.meta.env.VITE_BACK}`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

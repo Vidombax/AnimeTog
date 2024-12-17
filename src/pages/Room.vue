@@ -154,7 +154,6 @@ onMounted(async () => {
 
     if (htmlFrame !== '') {
       document.getElementsByClassName('video')[0].innerHTML = htmlFrame.value;
-      console.log('test');
     }
 
     await loadComment();
